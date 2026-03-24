@@ -1,0 +1,80 @@
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.code-workspace
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+.flattened-pom.xml
+
+# Compiler
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Gradle
+.gradle/
+build/
+!gradle-wrapper.jar
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+*.pydevproject
+.metadata
+.cproject
+.c9/
+*.launch
+.factorypath
+
+# Vim
+*.swp
+*.swo
+*~
+.vim/
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Intellij
+out/
+*.iml
+
+# npm/Node (if applicable)
+node_modules/
+npm-debug.log
+
+# Python (if applicable)
+*.pyc
+__pycache__/
+.env
+
+# Generated files
+*.log
+*.pot
+

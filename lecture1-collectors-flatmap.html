@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base target="_parent">
+<title>Advanced Java Streams — Lecture 1: Collectors &amp; flatMap</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181b24;
+    --surface-raised: #1e2230;
+    --border: #2a2f3e;
+    --text: #e2e4ea;
+    --text-dim: #8b90a0;
+    --accent: #6ee7b7;
+    --accent-dim: #34d3991a;
+    --accent2: #818cf8;
+    --accent2-dim: #818cf81a;
+    --warn: #fbbf24;
+    --warn-dim: #fbbf241a;
+    --error: #f87171;
+    --code-bg: #141620;
+    --code-border: #252a3a;
+    --keyword: #c084fc;
+    --string: #6ee7b7;
+    --type: #818cf8;
+    --comment: #6b7280;
+    --method: #fbbf24;
+    --number: #f472b6;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 0 1.5rem 6rem;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+
+  header {
+    padding: 4rem 0 3rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 3rem;
+  }
+
+  header .tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 0.3rem 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+
+  header h1 {
+    font-family: 'Source Serif 4', serif;
+    font-size: 2.8rem;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.75rem;
+  }
+
+  header h1 span { color: var(--accent); }
+
+  header .subtitle {
+    font-size: 1.15rem;
+    color: var(--text-dim);
+    max-width: 620px;
+  }
+
+  h2 {
+    font-family: 'Source Serif 4', serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    margin: 3.5rem 0 1rem;
+    letter-spacing: -0.015em;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  h2 .num {
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    margin-right: 0.4rem;
+  }
+
+  h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 2rem 0 0.75rem;
+    color: var(--accent2);
+  }
+
+  p { margin-bottom: 1rem; font-size: 1.02rem; }
+
+  .concept-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+
+  .concept-box.warn {
+    border-left-color: var(--warn);
+    background: var(--warn-dim);
+  }
+
+  .concept-box.info {
+    border-left-color: var(--accent2);
+    background: var(--accent2-dim);
+  }
+
+  .concept-box strong {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.92rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .concept-box.warn strong { color: var(--warn); }
+  .concept-box.info strong { color: var(--accent2); }
+  .concept-box strong { color: var(--accent); }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+    margin: 1.25rem 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    position: relative;
+  }
+
+  pre .label {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: var(--surface-raised);
+    color: var(--text-dim);
+    padding: 0.25rem 0.65rem;
+    border-radius: 0 8px 0 6px;
+    border-left: 1px solid var(--code-border);
+    border-bottom: 1px solid var(--code-border);
+  }
+
+  .kw { color: var(--keyword); }
+  .st { color: var(--string); }
+  .ty { color: var(--type); }
+  .cm { color: var(--comment); font-style: italic; }
+  .mt { color: var(--method); }
+  .nb { color: var(--number); }
+  .op { color: var(--text-dim); }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--surface-raised);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.88em;
+    color: var(--accent2);
+  }
+
+  .exercise {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    position: relative;
+  }
+
+  .exercise::before {
+    content: '✏️ EXERCISE';
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--warn);
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+
+  .exercise ol { padding-left: 1.25rem; }
+  .exercise li { margin-bottom: 0.5rem; }
+
+  .output {
+    background: #0d0f14;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 0.85rem 1.25rem;
+    margin: 0.75rem 0 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--accent);
+    white-space: pre-wrap;
+  }
+
+  .output::before {
+    content: '▸ Output';
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.25rem 0;
+  }
+
+  @media (max-width: 700px) {
+    .two-col { grid-template-columns: 1fr; }
+    header h1 { font-size: 2rem; }
+  }
+
+  .nav-footer {
+    margin-top: 4rem;
+    padding: 2rem 0;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+
+  .nav-footer span { color: var(--accent); font-weight: 600; }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .toc h4 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+  }
+
+  .toc ul { list-style: none; }
+
+  .toc li {
+    padding: 0.35rem 0;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+
+  .toc li::before {
+    content: '→ ';
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .diagram-wrap {
+    margin: 2rem 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.75rem 1.5rem 1.25rem;
+    overflow-x: auto;
+  }
+
+  .diagram-wrap .diagram-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent2);
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .diagram-wrap svg {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .sig {
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+    overflow-x: auto;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="tag">Lecture 1 of 2</div>
+  <h1>Advanced Streams: <span>Collectors &amp; flatMap</span></h1>
+  <p class="subtitle">Go beyond filter-map-collect — learn to reshape, group, flatten, and transform data with the full power of the Streams API.</p>
+</header>
+
+<div class="toc">
+  <h4>Today's Agenda</h4>
+  <ul>
+    <li>Setup: the domain model we'll use throughout</li>
+    <li>Collectors — groupingBy, partitioningBy, toMap, and downstream collectors</li>
+    <li>flatMap — working with nested and hierarchical data</li>
+    <li>Combining techniques — real-world patterns</li>
+    <li>Exercises</li>
+  </ul>
+</div>
+<!-- ===== STREAM RECAP — insert between TOC and Collectors Reference ===== -->
+
+<style>
+  .recap-flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 2rem 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .recap-flow .flow-stage {
+    flex: 1;
+    min-width: 200px;
+    padding: 1.25rem 1.25rem;
+    position: relative;
+    border: 1px solid var(--border);
+  }
+
+  .recap-flow .flow-stage:first-child {
+    border-radius: 8px 0 0 8px;
+  }
+
+  .recap-flow .flow-stage:last-child {
+    border-radius: 0 8px 8px 0;
+  }
+
+  .recap-flow .flow-stage.stage-source {
+    background: #141620;
+    border-color: var(--code-border);
+  }
+
+  .recap-flow .flow-stage.stage-intermediate {
+    background: var(--accent2-dim);
+    border-color: #818cf830;
+  }
+
+  .recap-flow .flow-stage.stage-terminal {
+    background: var(--accent-dim);
+    border-color: #6ee7b730;
+  }
+
+  .recap-flow .flow-stage .stage-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: inline-block;
+    padding: 0.15rem 0.45rem;
+    border-radius: 3px;
+    margin-bottom: 0.6rem;
+  }
+
+  .stage-source .stage-tag      { background: #1e2230; color: var(--text-dim); }
+  .stage-intermediate .stage-tag { background: #818cf82a; color: #818cf8; }
+  .stage-terminal .stage-tag     { background: #6ee7b72a; color: #6ee7b7; }
+
+  .recap-flow .flow-stage h5 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+  }
+
+  .stage-source h5      { color: var(--text-dim); }
+  .stage-intermediate h5 { color: #818cf8; }
+  .stage-terminal h5     { color: #6ee7b7; }
+
+  .recap-flow .flow-stage p {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--text);
+    margin-bottom: 0;
+  }
+
+  .recap-flow .flow-stage .returns {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    margin-top: 0.6rem;
+    padding: 0.3rem 0.55rem;
+    border-radius: 4px;
+    display: inline-block;
+  }
+
+  .stage-intermediate .returns { background: #818cf81a; color: #818cf8; }
+  .stage-terminal .returns     { background: #6ee7b71a; color: #6ee7b7; }
+
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    color: var(--text-dim);
+    font-size: 1.2rem;
+    padding: 0 0.15rem;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 700px) {
+    .recap-flow { flex-direction: column; }
+    .recap-flow .flow-stage:first-child { border-radius: 8px 8px 0 0; }
+    .recap-flow .flow-stage:last-child { border-radius: 0 0 8px 8px; }
+    .flow-arrow { justify-content: center; transform: rotate(90deg); padding: 0.25rem 0; }
+  }
+
+  .recap-ops {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin: 1rem 0;
+  }
+
+  @media (max-width: 700px) {
+    .recap-ops { grid-template-columns: 1fr; }
+  }
+
+  .recap-ops .op-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 5px;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  .recap-ops .op-chip.inter {
+    background: #818cf812;
+    border: 1px solid #818cf825;
+    color: #818cf8;
+  }
+
+  .recap-ops .op-chip.term {
+    background: #6ee7b712;
+    border: 1px solid #6ee7b725;
+    color: #6ee7b7;
+  }
+
+  .recap-ops .op-chip .op-desc {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+  }
+
+  .transition-box {
+    background: linear-gradient(135deg, #818cf80d 0%, #6ee7b70d 100%);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin: 2rem 0 0;
+  }
+
+  .transition-box p {
+    margin-bottom: 0;
+    font-size: 0.98rem;
+    color: var(--text);
+  }
+
+  .transition-box .arrow-down {
+    display: block;
+    text-align: center;
+    color: var(--accent);
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+  }
+</style>
+
+<h2><span class="num">✦</span> Quick Recap — How Streams Work</h2>
+
+<p>We've already covered how streams process data from various sources. Collections are the most common, but streams can also originate from arrays, files, generator functions, or even I/O channels. Regardless of the source, the processing model is always the same: data elements flow through a pipeline of <strong>intermediate</strong> operations and finish with a single <strong>terminal</strong> operation.</p>
+
+<div class="recap-flow">
+  <div class="flow-stage stage-source">
+    <span class="stage-tag">Source</span>
+    <h5>Data origin</h5>
+    <p>Collection, array, file, generator, I/O channel…</p>
+  </div>
+  <span class="flow-arrow">▸</span>
+  <div class="flow-stage stage-intermediate">
+    <span class="stage-tag">Intermediate</span>
+    <h5>Transform & filter</h5>
+    <p>Reshape, select, reorder. Chainable — each returns a new Stream.</p>
+    <span class="returns">→ returns Stream&lt;T&gt;</span>
+  </div>
+  <span class="flow-arrow">▸</span>
+  <div class="flow-stage stage-terminal">
+    <span class="stage-tag">Terminal</span>
+    <h5>Produce a result</h5>
+    <p>Triggers execution of the entire pipeline. Does <strong>not</strong> return a Stream.</p>
+    <span class="returns">→ returns value / void</span>
+  </div>
+</div>
+
+<h3>Intermediate Operations</h3>
+
+<p>An intermediate operation takes a stream in and hands a stream back out — that's what makes chaining possible. You can link as many as you need into a continuous pipeline. Here are the ones you've already seen:</p>
+
+<div class="recap-ops">
+  <div class="op-chip inter"><code>map</code> <span class="op-desc">transform each element</span></div>
+  <div class="op-chip inter"><code>filter</code> <span class="op-desc">keep elements matching a condition</span></div>
+  <div class="op-chip inter"><code>sorted</code> <span class="op-desc">reorder elements</span></div>
+  <div class="op-chip inter"><code>distinct</code> <span class="op-desc">remove duplicates</span></div>
+  <div class="op-chip inter"><code>peek</code> <span class="op-desc">inspect without altering (debugging)</span></div>
+  <div class="op-chip inter"><code>limit / skip</code> <span class="op-desc">truncate or skip elements</span></div>
+</div>
+
+<h3>Terminal Operations</h3>
+
+<p>A terminal operation sits at the end of the pipeline and kicks off the actual processing. Nothing happens until a terminal operation is invoked — the entire pipeline is <em>lazy</em>. The result is never a stream; it's a value, a collection, or a side effect.</p>
+
+<div class="recap-ops">
+  <div class="op-chip term"><code>collect</code> <span class="op-desc">accumulate into a container</span></div>
+  <div class="op-chip term"><code>forEach</code> <span class="op-desc">perform an action on each element</span></div>
+  <div class="op-chip term"><code>reduce</code> <span class="op-desc">fold into a single value</span></div>
+  <div class="op-chip term"><code>count</code> <span class="op-desc">count elements</span></div>
+  <div class="op-chip term"><code>min / max</code> <span class="op-desc">find extremes</span></div>
+  <div class="op-chip term"><code>anyMatch / allMatch</code> <span class="op-desc">test a condition</span></div>
+  <div class="op-chip term"><code>findFirst / findAny</code> <span class="op-desc">retrieve a single element</span></div>
+  <div class="op-chip term"><code>toArray</code> <span class="op-desc">convert to an array</span></div>
+</div>
+
+<div class="concept-box warn">
+  <strong>Remember: streams are lazy and single-use</strong>
+  No computation runs until a terminal operation is called. And once a stream has been consumed by a terminal operation, it cannot be reused — you'll get an <code>IllegalStateException</code> if you try.
+</div>
+
+<div class="transition-box">
+  <p>With these fundamentals in place, the natural next question is: <strong>what can we actually produce at the end of a pipeline?</strong> So far we've mostly used <code>collect(Collectors.toList())</code> to gather results into a list — but that barely scratches the surface. The <code>Collectors</code> class offers dozens of powerful strategies for reshaping, aggregating, and transforming stream output. Let's take a look at the full toolkit before diving into examples.</p>
+  <span class="arrow-down">↓</span>
+</div>
+
+<!-- ===== END STREAM RECAP ===== -->
+<!-- ===== COLLECTORS CHEAT SHEET — insert between TOC and Section 0 ===== -->
+
+<style>
+  .ref-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  @media (max-width: 700px) {
+    .ref-grid { grid-template-columns: 1fr; }
+  }
+
+  .ref-card {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    padding: 1.1rem 1.25rem;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+
+  .ref-card:hover { border-color: #3a4058; }
+
+  .ref-card .card-badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    margin-bottom: 0.6rem;
+  }
+
+  .ref-card .card-badge.reshaping   { background: #818cf81a; color: #818cf8; }
+  .ref-card .card-badge.aggregating { background: #6ee7b71a; color: #6ee7b7; }
+  .ref-card .card-badge.converting  { background: #fbbf241a; color: #fbbf24; }
+  .ref-card .card-badge.downstream  { background: #c084fc1a; color: #c084fc; }
+
+  .ref-card h4 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.35rem;
+  }
+
+  .ref-card .card-sig {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+    line-height: 1.45;
+  }
+
+  .ref-card .card-desc {
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.55;
+  }
+
+  .ref-card .card-desc code {
+    font-size: 0.8em;
+  }
+
+  .ref-card .card-result {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--accent);
+    background: var(--surface);
+    padding: 0.35rem 0.65rem;
+    border-radius: 4px;
+    margin-top: 0.55rem;
+    display: inline-block;
+  }
+
+  .ref-intro {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .ref-intro p {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .ref-intro p:last-child { margin-bottom: 0; }
+
+  .category-label {
+    font-family: 'Source Serif 4', serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 2rem 0 0.75rem;
+    color: var(--text);
+  }
+
+  .category-label .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    position: relative;
+    top: -1px;
+  }
+
+  .category-label .dot.reshaping   { background: #818cf8; }
+  .category-label .dot.aggregating { background: #6ee7b7; }
+  .category-label .dot.converting  { background: #fbbf24; }
+  .category-label .dot.downstream  { background: #c084fc; }
+</style>
+
+<h2><span class="num">✦</span> Collectors at a Glance</h2>
+
+<div class="ref-intro">
+  <p>The <code>java.util.stream.Collectors</code> class is a toolbox of factory methods. Every method returns a <code>Collector</code> — an object that tells <code>.collect()</code> <em>how</em> to accumulate stream elements into a result.</p>
+  <p>This reference organizes them by purpose. Color-coded badges match the categories below — use this as a map while working through the lecture.</p>
+</div>
+
+<!-- ── Reshaping ── -->
+<div class="category-label"><span class="dot reshaping"></span>Reshaping — rearrange elements into a new structure</div>
+
+<div class="ref-grid">
+  <div class="ref-card">
+    <span class="card-badge reshaping">Reshaping</span>
+    <h4>groupingBy</h4>
+    <div class="card-sig">groupingBy(<span class="ty">Function</span>&lt;T,K&gt;)</div>
+    <div class="card-desc">Splits elements into groups by a classifier function. Returns a <code>Map&lt;K, List&lt;T&gt;&gt;</code>.</div>
+    <div class="card-result">Map&lt;String, List&lt;Student&gt;&gt;</div>
+  </div>
+
+  <div class="ref-card">
+    <span class="card-badge reshaping">Reshaping</span>
+    <h4>partitioningBy</h4>
+    <div class="card-sig">partitioningBy(<span class="ty">Predicate</span>&lt;T&gt;)</div>
+    <div class="card-desc">Binary split — always produces exactly two groups keyed by <code>true</code> and <code>false</code>. Both keys are always present.</div>
+    <div class="card-result">Map&lt;Boolean, List&lt;Student&gt;&gt;</div>
+  </div>
+</div>
+
+<!-- ── Converting ── -->
+<div class="category-label"><span class="dot converting"></span>Converting — collect elements into a specific container</div>
+
+<div class="ref-grid">
+  <div class="ref-card">
+    <span class="card-badge converting">Converting</span>
+    <h4>toList / toSet</h4>
+    <div class="card-sig">toList() · toSet() · toUnmodifiableList()</div>
+    <div class="card-desc">The basics — accumulate elements into a <code>List</code> or <code>Set</code>. The unmodifiable variants return immutable collections.</div>
+    <div class="card-result">List&lt;T&gt; · Set&lt;T&gt;</div>
+  </div>
+
+  <div class="ref-card">
+    <span class="card-badge converting">Converting</span>
+    <h4>toMap</h4>
+    <div class="card-sig">toMap(keyFn, valueFn)<br>toMap(keyFn, valueFn, mergeFn)</div>
+    <div class="card-desc">Extract a key and value from each element. The three-arg form adds a merge function for duplicate keys — <strong>always provide one</strong> if collisions are possible.</div>
+    <div class="card-result">Map&lt;K, V&gt;</div>
+  </div>
+
+  <div class="ref-card">
+    <span class="card-badge converting">Converting</span>
+    <h4>toCollection</h4>
+    <div class="card-sig">toCollection(<span class="ty">Supplier</span>&lt;C&gt;)</div>
+    <div class="card-desc">Collect into any <code>Collection</code> type you supply — <code>TreeSet::new</code>, <code>LinkedList::new</code>, <code>ArrayDeque::new</code>, etc.</div>
+    <div class="card-result">C extends Collection&lt;T&gt;</div>
+  </div>
+
+  <div class="ref-card">
+    <span class="card-badge converting">Converting</span>
+    <h4>joining</h4>
+    <div class="card-sig">joining() · joining(delim)<br>joining(delim, prefix, suffix)</div>
+    <div class="card-desc">Concatenates <code>CharSequence</code> elements into a single <code>String</code>. The three-arg form adds a prefix and suffix around the result.</div>
+    <div class="card-result">String</div>
+  </div>
+</div>
+
+<!-- ── Aggregating ── -->
+<div class="category-label"><span class="dot aggregating"></span>Aggregating — reduce elements to a single summary value</div>
+
+<div class="ref-grid">
+  <div class="ref-card">
+    <span class="card-badge aggregating">Aggregating</span>
+    <h4>counting</h4>
+    <div class="card-sig">counting()</div>
+    <div class="card-desc">Counts elements. Most useful as a downstream collector inside <code>groupingBy</code> — as a top-level call, <code>.count()</code> on the stream is simpler.</div>
+    <div class="card-result">Long</div>
+  </div>
+
+  <div class="ref-card">
+    <span class="card-badge aggregating">Aggregating</span>
+    <h4>summingInt / Double / Long</h4>
+    <div class="card-sig">summingDouble(<span class="ty">ToDoubleFunction</span>&lt;T&gt;)</div>
+    <div class="card-desc">Sums a numeric property. Like <code>counting</code>, most powerful as a downstream collector for per-group sums.</div>
+    <div class="card-result">Double · Integer · Long</div>
+  </div>
+
+  <div class="ref-card">
+    <span class="card-badge aggregating">Aggregating</span>
+    <h4>averagingInt / Double / Long</h4>
+    <div class="card-sig">averagingDouble(<span class="ty">ToDoubleFunction</span>&lt;T&gt;)</div>
+    <div class="card-desc">Computes the arithmetic mean of a numeric property. Returns <code>0.0</code> for empty streams.</div>
+    <div class="card-result">Double</div>
+  </div>
+
+  <div class="ref-card">
+    <span class="card-badge aggregating">Aggregating</span>
+    <h4>summarizingInt / Double / Long</h4>
+    <div class="card-sig">summarizingDouble(<span class="ty">ToDoubleFunction</span>&lt;T&gt;)</div>
+    <div class="card-desc">Returns a statistics object with count, sum, min, max, and average — all in one pass. Great for exploratory analysis.</div>
+    <div class="card-result">DoubleSummaryStatistics</div>
+  </div>
+
+  <div class="ref-card">
+    <span class="card-badge aggregating">Aggregating</span>
+    <h4>maxBy / minBy</h4>
+    <div class="card-sig">maxBy(<span class="ty">Comparator</span>&lt;T&gt;)</div>
+    <div class="card-desc">Finds the max or min element by a comparator. Returns <code>Optional&lt;T&gt;</code> — empty if the stream (or group) is empty.</div>
+    <div class="card-result">Optional&lt;T&gt;</div>
+  </div>
+
+  <div class="ref-card">
+    <span class="card-badge aggregating">Aggregating</span>
+    <h4>reducing</h4>
+    <div class="card-sig">reducing(identity, op)<br>reducing(identity, mapper, op)</div>
+    <div class="card-desc">The collector equivalent of <code>Stream.reduce()</code>. Useful as a downstream collector when you need a custom fold per group.</div>
+    <div class="card-result">T · Optional&lt;T&gt;</div>
+  </div>
+</div>
+
+<!-- ── Downstream / Adapters ── -->
+<div class="category-label"><span class="dot downstream"></span>Downstream Adapters — transform or wrap other collectors</div>
+
+<div class="ref-grid">
+  <div class="ref-card">
+    <span class="card-badge downstream">Adapter</span>
+    <h4>mapping</h4>
+    <div class="card-sig">mapping(<span class="ty">Function</span>&lt;T,U&gt;, downstream)</div>
+    <div class="card-desc">Applies a transformation <em>before</em> passing elements to the downstream collector. Think of it as <code>.map()</code> inside a collector chain.</div>
+    <div class="card-result">depends on downstream</div>
+  </div>
+
+  <div class="ref-card">
+    <span class="card-badge downstream">Adapter</span>
+    <h4>filtering</h4>
+    <div class="card-sig">filtering(<span class="ty">Predicate</span>&lt;T&gt;, downstream)</div>
+    <div class="card-desc">Filters elements <em>within each group</em> before collecting. Unlike <code>.filter()</code> on the stream, this preserves empty groups in <code>groupingBy</code>.</div>
+    <div class="card-result">depends on downstream</div>
+  </div>
+
+  <div class="ref-card">
+    <span class="card-badge downstream">Adapter</span>
+    <h4>flatMapping</h4>
+    <div class="card-sig">flatMapping(<span class="ty">Function</span>&lt;T, Stream&lt;U&gt;&gt;, downstream)</div>
+    <div class="card-desc">Like <code>mapping</code>, but each element maps to a <em>stream</em> that gets flattened — <code>.flatMap()</code> inside a collector. Added in Java 9.</div>
+    <div class="card-result">depends on downstream</div>
+  </div>
+
+  <div class="ref-card">
+    <span class="card-badge downstream">Adapter</span>
+    <h4>collectingAndThen</h4>
+    <div class="card-sig">collectingAndThen(downstream, finisher)</div>
+    <div class="card-desc">Runs a downstream collector, then applies a final transformation to the result. Useful for wrapping in immutable collections or extracting a value.</div>
+    <div class="card-result">depends on finisher</div>
+  </div>
+</div>
+
+<div class="concept-box info">
+  <strong>How to read this reference</strong>
+  The <span style="color:#818cf8">reshaping</span> and <span style="color:#fbbf24">converting</span> collectors are typically used as the <em>top-level</em> argument to <code>.collect()</code>. The <span style="color:#6ee7b7">aggregating</span> and <span style="color:#c084fc">adapter</span> collectors are most powerful when nested <em>inside</em> a reshaping collector as downstream collectors. The rest of this lecture shows you how to combine them.
+</div>
+
+<!-- ===== END COLLECTORS REFERENCE ===== -->
+<!-- ===== SETUP ===== -->
+<h2><span class="num">0.</span> Setup — Our Domain Model</h2>
+
+<p>Every example in both lectures uses the same set of record classes. Think of it as a small university enrollment system:</p>
+
+<pre><span class="label">Domain Records</span>
+<span class="kw">record</span> <span class="ty">Student</span>(
+    <span class="ty">String</span> name,
+    <span class="ty">int</span> age,
+    <span class="ty">String</span> major,
+    <span class="ty">double</span> gpa,
+    <span class="ty">List</span>&lt;<span class="ty">String</span>&gt; enrolledCourses
+) {}
+
+<span class="kw">record</span> <span class="ty">Course</span>(
+    <span class="ty">String</span> code,
+    <span class="ty">String</span> title,
+    <span class="ty">String</span> department,
+    <span class="ty">int</span> credits,
+    <span class="ty">List</span>&lt;<span class="ty">Student</span>&gt; roster
+) {}
+</pre>
+
+<pre><span class="label">Sample Data</span>
+<span class="ty">List</span>&lt;<span class="ty">Student</span>&gt; students = <span class="ty">List</span>.<span class="mt">of</span>(
+    <span class="kw">new</span> <span class="ty">Student</span>(<span class="st">"Alice"</span>,   <span class="nb">21</span>, <span class="st">"CS"</span>,      <span class="nb">3.8</span>, <span class="ty">List</span>.<span class="mt">of</span>(<span class="st">"CS101"</span>, <span class="st">"CS201"</span>, <span class="st">"MATH301"</span>)),
+    <span class="kw">new</span> <span class="ty">Student</span>(<span class="st">"Bob"</span>,     <span class="nb">22</span>, <span class="st">"CS"</span>,      <span class="nb">3.2</span>, <span class="ty">List</span>.<span class="mt">of</span>(<span class="st">"CS101"</span>, <span class="st">"CS301"</span>)),
+    <span class="kw">new</span> <span class="ty">Student</span>(<span class="st">"Charlie"</span>, <span class="nb">20</span>, <span class="st">"Math"</span>,    <span class="nb">3.9</span>, <span class="ty">List</span>.<span class="mt">of</span>(<span class="st">"MATH301"</span>, <span class="st">"MATH201"</span>, <span class="st">"CS101"</span>)),
+    <span class="kw">new</span> <span class="ty">Student</span>(<span class="st">"Diana"</span>,   <span class="nb">23</span>, <span class="st">"Math"</span>,    <span class="nb">3.5</span>, <span class="ty">List</span>.<span class="mt">of</span>(<span class="st">"MATH201"</span>, <span class="st">"PHYS101"</span>)),
+    <span class="kw">new</span> <span class="ty">Student</span>(<span class="st">"Eve"</span>,     <span class="nb">21</span>, <span class="st">"Physics"</span>, <span class="nb">3.7</span>, <span class="ty">List</span>.<span class="mt">of</span>(<span class="st">"PHYS101"</span>, <span class="st">"MATH301"</span>, <span class="st">"CS201"</span>)),
+    <span class="kw">new</span> <span class="ty">Student</span>(<span class="st">"Frank"</span>,   <span class="nb">24</span>, <span class="st">"CS"</span>,      <span class="nb">2.9</span>, <span class="ty">List</span>.<span class="mt">of</span>(<span class="st">"CS101"</span>)),
+    <span class="kw">new</span> <span class="ty">Student</span>(<span class="st">"Grace"</span>,   <span class="nb">20</span>, <span class="st">"Physics"</span>, <span class="nb">3.6</span>, <span class="ty">List</span>.<span class="mt">of</span>(<span class="st">"PHYS101"</span>, <span class="st">"PHYS201"</span>, <span class="st">"MATH201"</span>))
+);
+</pre>
+
+
+<!-- ===== SECTION 1: COLLECTORS ===== -->
+<h2><span class="num">1.</span> Beyond <code>toList()</code> — The Collectors Toolkit</h2>
+
+<p>You already know <code>.collect(Collectors.toList())</code>. But <code>Collectors</code> is a factory with <strong>dozens</strong> of useful collectors. Today we'll focus on the ones you'll reach for most often.</p>
+
+<h3>1.1 — groupingBy</h3>
+
+<p>The workhorse of data reshaping. It transforms a flat list into a <code>Map&lt;K, List&lt;V&gt;&gt;</code> — think SQL's <code>GROUP BY</code>.</p>
+
+<div class="sig"><span class="ty">Collector</span>&lt;T, ?, <span class="ty">Map</span>&lt;K, <span class="ty">List</span>&lt;T&gt;&gt;&gt; <span class="mt">groupingBy</span>(<span class="ty">Function</span>&lt;T, K&gt; classifier)</div>
+
+<pre><span class="label">Example 1a</span>
+<span class="cm">// Group students by major</span>
+<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">List</span>&lt;<span class="ty">Student</span>&gt;&gt; byMajor = students.<span class="mt">stream</span>()
+    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">groupingBy</span>(<span class="ty">Student</span>::major));
+</pre>
+
+<div class="output">{CS=[Alice, Bob, Frank], Math=[Charlie, Diana], Physics=[Eve, Grace]}</div>
+
+<div class="diagram-wrap">
+  <span class="diagram-title">How groupingBy works</span>
+  <svg viewBox="0 0 820 370" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+    <!-- flat list -->
+    <text x="90" y="22" font-size="10" fill="#8b90a0" text-anchor="middle" letter-spacing="0.06em">LIST&lt;STUDENT&gt;</text>
+    <g transform="translate(20, 32)">
+      <rect x="0" y="0" width="140" height="30" rx="5" fill="#141620" stroke="#2a2f3e"/>
+      <text x="70" y="19" font-size="11" fill="#e2e4ea" text-anchor="middle">Alice  · CS</text>
+      <rect x="0" y="36" width="140" height="30" rx="5" fill="#141620" stroke="#2a2f3e"/>
+      <text x="70" y="55" font-size="11" fill="#e2e4ea" text-anchor="middle">Bob    · CS</text>
+      <rect x="0" y="72" width="140" height="30" rx="5" fill="#141620" stroke="#2a2f3e"/>
+      <text x="70" y="91" font-size="11" fill="#e2e4ea" text-anchor="middle">Charlie· Math</text>
+      <rect x="0" y="108" width="140" height="30" rx="5" fill="#141620" stroke="#2a2f3e"/>
+      <text x="70" y="127" font-size="11" fill="#e2e4ea" text-anchor="middle">Diana  · Math</text>
+      <rect x="0" y="144" width="140" height="30" rx="5" fill="#141620" stroke="#2a2f3e"/>
+      <text x="70" y="163" font-size="11" fill="#e2e4ea" text-anchor="middle">Eve    · Physics</text>
+      <rect x="0" y="180" width="140" height="30" rx="5" fill="#141620" stroke="#2a2f3e"/>
+      <text x="70" y="199" font-size="11" fill="#e2e4ea" text-anchor="middle">Frank  · CS</text>
+      <rect x="0" y="216" width="140" height="30" rx="5" fill="#141620" stroke="#2a2f3e"/>
+      <text x="70" y="235" font-size="11" fill="#e2e4ea" text-anchor="middle">Grace  · Physics</text>
+    </g>
+
+    <!-- classifier arrow -->
+    <g transform="translate(180, 130)">
+      <line x1="0" y1="30" x2="100" y2="30" stroke="#818cf8" stroke-width="2" stroke-dasharray="6,3"/>
+      <polygon points="100,24 115,30 100,36" fill="#818cf8"/>
+      <text x="56" y="18" font-size="10" fill="#818cf8" text-anchor="middle">Student::major</text>
+      <text x="56" y="54" font-size="9" fill="#6b7280" text-anchor="middle" font-style="italic">classifier function</text>
+    </g>
+
+    <!-- grouped output -->
+    <g transform="translate(310, 10)">
+      <text x="240" y="12" font-size="10" fill="#8b90a0" text-anchor="middle" letter-spacing="0.06em">MAP&lt;STRING, LIST&lt;STUDENT&gt;&gt;</text>
+
+      <!-- CS bucket -->
+      <rect x="0" y="24" width="480" height="90" rx="8" fill="none" stroke="#6ee7b7" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <rect x="10" y="34" width="60" height="24" rx="4" fill="#6ee7b71a"/>
+      <text x="40" y="50" font-size="11" fill="#6ee7b7" text-anchor="middle" font-weight="600">CS</text>
+      <text x="82" y="50" font-size="14" fill="#6b7280">→</text>
+      <rect x="100" y="34" width="100" height="24" rx="4" fill="#141620" stroke="#2a2f3e"/>
+      <text x="150" y="50" font-size="11" fill="#e2e4ea" text-anchor="middle">Alice</text>
+      <rect x="210" y="34" width="100" height="24" rx="4" fill="#141620" stroke="#2a2f3e"/>
+      <text x="260" y="50" font-size="11" fill="#e2e4ea" text-anchor="middle">Bob</text>
+      <rect x="320" y="34" width="100" height="24" rx="4" fill="#141620" stroke="#2a2f3e"/>
+      <text x="370" y="50" font-size="11" fill="#e2e4ea" text-anchor="middle">Frank</text>
+      <text x="240" y="96" font-size="9" fill="#6b7280" text-anchor="middle">3 students matched key "CS"</text>
+
+      <!-- Math bucket -->
+      <rect x="0" y="124" width="480" height="90" rx="8" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <rect x="10" y="134" width="60" height="24" rx="4" fill="#fbbf241a"/>
+      <text x="40" y="150" font-size="11" fill="#fbbf24" text-anchor="middle" font-weight="600">Math</text>
+      <text x="82" y="150" font-size="14" fill="#6b7280">→</text>
+      <rect x="100" y="134" width="100" height="24" rx="4" fill="#141620" stroke="#2a2f3e"/>
+      <text x="150" y="150" font-size="11" fill="#e2e4ea" text-anchor="middle">Charlie</text>
+      <rect x="210" y="134" width="100" height="24" rx="4" fill="#141620" stroke="#2a2f3e"/>
+      <text x="260" y="150" font-size="11" fill="#e2e4ea" text-anchor="middle">Diana</text>
+      <text x="240" y="196" font-size="9" fill="#6b7280" text-anchor="middle">2 students matched key "Math"</text>
+
+      <!-- Physics bucket -->
+      <rect x="0" y="224" width="480" height="90" rx="8" fill="none" stroke="#c084fc" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <rect x="10" y="234" width="76" height="24" rx="4" fill="#c084fc1a"/>
+      <text x="48" y="250" font-size="11" fill="#c084fc" text-anchor="middle" font-weight="600">Physics</text>
+      <text x="98" y="250" font-size="14" fill="#6b7280">→</text>
+      <rect x="116" y="234" width="100" height="24" rx="4" fill="#141620" stroke="#2a2f3e"/>
+      <text x="166" y="250" font-size="11" fill="#e2e4ea" text-anchor="middle">Eve</text>
+      <rect x="226" y="234" width="100" height="24" rx="4" fill="#141620" stroke="#2a2f3e"/>
+      <text x="276" y="250" font-size="11" fill="#e2e4ea" text-anchor="middle">Grace</text>
+      <text x="240" y="296" font-size="9" fill="#6b7280" text-anchor="middle">2 students matched key "Physics"</text>
+    </g>
+  </svg>
+</div>
+
+<div class="concept-box">
+  <strong>Key insight</strong>
+  The classifier function extracts the map key from each element. Elements that produce the same key end up in the same list.
+</div>
+
+<h3>1.2 — Downstream Collectors</h3>
+
+<p>What if you don't want a <code>List</code> as the map value? The two-argument <code>groupingBy</code> accepts a <em>downstream collector</em> — a second collector that determines how to aggregate each group.</p>
+
+<pre><span class="label">Example 1b — counting</span>
+<span class="cm">// How many students in each major?</span>
+<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">Long</span>&gt; countByMajor = students.<span class="mt">stream</span>()
+    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">groupingBy</span>(
+        <span class="ty">Student</span>::major,
+        <span class="ty">Collectors</span>.<span class="mt">counting</span>()
+    ));
+</pre>
+
+<div class="output">{CS=3, Math=2, Physics=2}</div>
+
+<pre><span class="label">Example 1c — averagingDouble</span>
+<span class="cm">// Average GPA per major</span>
+<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">Double</span>&gt; avgGpaByMajor = students.<span class="mt">stream</span>()
+    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">groupingBy</span>(
+        <span class="ty">Student</span>::major,
+        <span class="ty">Collectors</span>.<span class="mt">averagingDouble</span>(<span class="ty">Student</span>::gpa)
+    ));
+</pre>
+
+<div class="output">{CS=3.3, Math=3.7, Physics=3.65}</div>
+
+<pre><span class="label">Example 1d — mapping + joining</span>
+<span class="cm">// Comma-separated names per major</span>
+<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">String</span>&gt; namesByMajor = students.<span class="mt">stream</span>()
+    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">groupingBy</span>(
+        <span class="ty">Student</span>::major,
+        <span class="ty">Collectors</span>.<span class="mt">mapping</span>(
+            <span class="ty">Student</span>::name,
+            <span class="ty">Collectors</span>.<span class="mt">joining</span>(<span class="st">", "</span>)
+        )
+    ));
+</pre>
+
+<div class="output">{CS=Alice, Bob, Frank, Math=Charlie, Diana, Physics=Eve, Grace}</div>
+
+<div class="concept-box info">
+  <strong>Pattern: composing downstream collectors</strong>
+  Think of it as a pipeline <em>inside</em> the grouping: first <code>mapping</code> transforms each element, then <code>joining</code> aggregates the results. You can nest these arbitrarily deep.
+</div>
+
+<div class="diagram-wrap">
+  <span class="diagram-title">Downstream collector composition — how nesting works</span>
+  <svg viewBox="0 0 820 260" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+
+    <!-- Stage 1: groupingBy -->
+    <g transform="translate(10, 24)">
+      <rect x="0" y="0" width="160" height="50" rx="8" fill="#818cf81a" stroke="#818cf8" stroke-width="1.5"/>
+      <text x="80" y="20" font-size="10" fill="#818cf8" text-anchor="middle" font-weight="600">groupingBy</text>
+      <text x="80" y="36" font-size="9" fill="#8b90a0" text-anchor="middle">Student::major</text>
+    </g>
+
+    <!-- Arrow 1 -->
+    <g transform="translate(180, 42)">
+      <line x1="0" y1="6" x2="32" y2="6" stroke="#6b7280" stroke-width="1.5"/>
+      <polygon points="32,1 42,6 32,11" fill="#6b7280"/>
+      <text x="20" y="-4" font-size="8" fill="#6b7280" text-anchor="middle">each group</text>
+    </g>
+
+    <!-- Stage 2: mapping -->
+    <g transform="translate(230, 24)">
+      <rect x="0" y="0" width="160" height="50" rx="8" fill="#fbbf241a" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="80" y="20" font-size="10" fill="#fbbf24" text-anchor="middle" font-weight="600">mapping</text>
+      <text x="80" y="36" font-size="9" fill="#8b90a0" text-anchor="middle">Student::name</text>
+    </g>
+
+    <!-- Arrow 2 -->
+    <g transform="translate(400, 42)">
+      <line x1="0" y1="6" x2="32" y2="6" stroke="#6b7280" stroke-width="1.5"/>
+      <polygon points="32,1 42,6 32,11" fill="#6b7280"/>
+      <text x="20" y="-4" font-size="8" fill="#6b7280" text-anchor="middle">names</text>
+    </g>
+
+    <!-- Stage 3: joining -->
+    <g transform="translate(450, 24)">
+      <rect x="0" y="0" width="160" height="50" rx="8" fill="#6ee7b71a" stroke="#6ee7b7" stroke-width="1.5"/>
+      <text x="80" y="20" font-size="10" fill="#6ee7b7" text-anchor="middle" font-weight="600">joining</text>
+      <text x="80" y="36" font-size="9" fill="#8b90a0" text-anchor="middle">", "</text>
+    </g>
+
+    <!-- Arrow to result -->
+    <g transform="translate(620, 42)">
+      <line x1="0" y1="6" x2="32" y2="6" stroke="#6b7280" stroke-width="1.5"/>
+      <polygon points="32,1 42,6 32,11" fill="#6b7280"/>
+    </g>
+
+    <!-- Result -->
+    <g transform="translate(665, 30)">
+      <rect x="0" y="0" width="140" height="36" rx="6" fill="#141620" stroke="#6ee7b7"/>
+      <text x="70" y="22" font-size="10" fill="#6ee7b7" text-anchor="middle" font-weight="600">String</text>
+    </g>
+
+    <!-- Concrete example walkthrough -->
+    <text x="410" y="108" font-size="10" fill="#8b90a0" text-anchor="middle" letter-spacing="0.04em">EXAMPLE: PROCESSING THE "CS" GROUP</text>
+    <line x1="60" y1="115" x2="760" y2="115" stroke="#2a2f3e" stroke-width="1"/>
+
+    <!-- Step 1 -->
+    <g transform="translate(10, 130)">
+      <rect x="0" y="0" width="160" height="80" rx="6" fill="#141620" stroke="#818cf8" stroke-width="1"/>
+      <text x="80" y="18" font-size="9" fill="#818cf8" text-anchor="middle">① grouped under "CS"</text>
+      <text x="80" y="38" font-size="10" fill="#e2e4ea" text-anchor="middle">Alice (3.8)</text>
+      <text x="80" y="54" font-size="10" fill="#e2e4ea" text-anchor="middle">Bob (3.2)</text>
+      <text x="80" y="70" font-size="10" fill="#e2e4ea" text-anchor="middle">Frank (2.9)</text>
+    </g>
+
+    <g transform="translate(180, 163)">
+      <line x1="0" y1="0" x2="38" y2="0" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <polygon points="38,-4 48,0 38,4" fill="#fbbf24"/>
+    </g>
+
+    <!-- Step 2 -->
+    <g transform="translate(230, 140)">
+      <rect x="0" y="0" width="160" height="60" rx="6" fill="#141620" stroke="#fbbf24" stroke-width="1"/>
+      <text x="80" y="18" font-size="9" fill="#fbbf24" text-anchor="middle">② extract names</text>
+      <text x="80" y="38" font-size="10" fill="#e2e4ea" text-anchor="middle">"Alice"</text>
+      <text x="80" y="54" font-size="10" fill="#e2e4ea" text-anchor="middle">"Bob"  "Frank"</text>
+    </g>
+
+    <g transform="translate(400, 163)">
+      <line x1="0" y1="0" x2="38" y2="0" stroke="#6ee7b7" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <polygon points="38,-4 48,0 38,4" fill="#6ee7b7"/>
+    </g>
+
+    <!-- Step 3 -->
+    <g transform="translate(450, 146)">
+      <rect x="0" y="0" width="185" height="42" rx="6" fill="#141620" stroke="#6ee7b7" stroke-width="1"/>
+      <text x="92" y="16" font-size="9" fill="#6ee7b7" text-anchor="middle">③ join with ", "</text>
+      <text x="92" y="34" font-size="11" fill="#e2e4ea" text-anchor="middle">"Alice, Bob, Frank"</text>
+    </g>
+
+    <g transform="translate(645, 163)">
+      <line x1="0" y1="0" x2="20" y2="0" stroke="#6b7280" stroke-width="1.5"/>
+      <polygon points="20,-4 30,0 20,4" fill="#6b7280"/>
+    </g>
+
+    <!-- Final map entry -->
+    <g transform="translate(680, 140)">
+      <rect x="0" y="0" width="130" height="50" rx="6" fill="#1e2230" stroke="#2a2f3e"/>
+      <text x="65" y="18" font-size="9" fill="#8b90a0" text-anchor="middle">Map entry:</text>
+      <text x="65" y="38" font-size="10" fill="#6ee7b7" text-anchor="middle">"CS" → "Alice,</text>
+      <text x="65" y="48" font-size="10" fill="#6ee7b7" text-anchor="middle">Bob, Frank"</text>
+    </g>
+
+    <!-- Caption -->
+    <text x="410" y="245" font-size="9.5" fill="#6b7280" text-anchor="middle" font-style="italic">This same pipeline runs independently for each key: "CS", "Math", "Physics"</text>
+  </svg>
+</div>
+
+<h3>1.3 — partitioningBy</h3>
+
+<p>A special case of grouping that splits data into exactly <strong>two groups</strong> using a predicate — the map always has keys <code>true</code> and <code>false</code>.</p>
+
+<pre><span class="label">Example 1e</span>
+<span class="cm">// Split students into honors (GPA >= 3.5) and non-honors</span>
+<span class="ty">Map</span>&lt;<span class="ty">Boolean</span>, <span class="ty">List</span>&lt;<span class="ty">Student</span>&gt;&gt; honorsSplit = students.<span class="mt">stream</span>()
+    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">partitioningBy</span>(s <span class="op">-&gt;</span> s.<span class="mt">gpa</span>() >= <span class="nb">3.5</span>));
+
+<span class="ty">List</span>&lt;<span class="ty">Student</span>&gt; honors    = honorsSplit.<span class="mt">get</span>(<span class="kw">true</span>);   <span class="cm">// [Alice, Charlie, Diana, Eve, Grace]</span>
+<span class="ty">List</span>&lt;<span class="ty">Student</span>&gt; nonHonors = honorsSplit.<span class="mt">get</span>(<span class="kw">false</span>);  <span class="cm">// [Bob, Frank]</span>
+</pre>
+
+<div class="concept-box warn">
+  <strong>When to use partitioningBy vs groupingBy</strong>
+  Use <code>partitioningBy</code> when your classification is binary (pass/fail, above/below a threshold). It guarantees both keys exist in the map even if one group is empty. <code>groupingBy</code> only creates keys for groups that have members.
+</div>
+
+<h3>1.4 — toMap</h3>
+
+<p>Creates a <code>Map</code> from key/value extraction functions. Great for building lookup tables.</p>
+
+<pre><span class="label">Example 1f</span>
+<span class="cm">// Build a lookup: student name → GPA</span>
+<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">Double</span>&gt; gpaByName = students.<span class="mt">stream</span>()
+    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">toMap</span>(
+        <span class="ty">Student</span>::name,     <span class="cm">// key extractor</span>
+        <span class="ty">Student</span>::gpa       <span class="cm">// value extractor</span>
+    ));
+</pre>
+
+<div class="output">{Alice=3.8, Bob=3.2, Charlie=3.9, Diana=3.5, Eve=3.7, Frank=2.9, Grace=3.6}</div>
+
+<div class="concept-box warn">
+  <strong>Duplicate key danger</strong>
+  If two elements produce the same key, <code>toMap</code> throws <code>IllegalStateException</code>. Always provide a merge function when duplicates are possible:
+</div>
+
+<pre><span class="label">Example 1g — handling duplicate keys</span>
+<span class="cm">// If two students share a major, keep the higher GPA</span>
+<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">Double</span>&gt; bestGpaByMajor = students.<span class="mt">stream</span>()
+    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">toMap</span>(
+        <span class="ty">Student</span>::major,
+        <span class="ty">Student</span>::gpa,
+        <span class="ty">Double</span>::<span class="mt">max</span>           <span class="cm">// merge function for collisions</span>
+    ));
+</pre>
+
+<div class="output">{CS=3.8, Math=3.9, Physics=3.7}</div>
+
+<!-- ===== SECTION 2: FLATMAP ===== -->
+<h2><span class="num">2.</span> flatMap — Flattening Nested Data</h2>
+
+<p>Real-world data is rarely flat. Students have lists of courses, orders have lists of items, users have lists of roles. <code>flatMap</code> is how you "unwrap" one level of nesting.</p>
+
+<h3>2.1 — The Problem</h3>
+
+<pre><span class="label">What map() gives you (wrong shape)</span>
+<span class="cm">// Get all enrolled course codes</span>
+<span class="ty">List</span>&lt;<span class="ty">List</span>&lt;<span class="ty">String</span>&gt;&gt; nested = students.<span class="mt">stream</span>()
+    .<span class="mt">map</span>(<span class="ty">Student</span>::enrolledCourses)
+    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">toList</span>());
+<span class="cm">// Result: [[CS101, CS201, MATH301], [CS101, CS301], ...]</span>
+<span class="cm">// We wanted a flat list, not a list of lists!</span>
+</pre>
+
+<div class="diagram-wrap">
+  <span class="diagram-title">map() vs flatMap() — visual comparison</span>
+  <svg viewBox="0 0 820 420" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+
+    <!-- ============ TOP HALF: map ============ -->
+    <text x="410" y="20" font-size="12" fill="#f87171" text-anchor="middle" font-weight="700" letter-spacing="0.04em">.map(Student::enrolledCourses)</text>
+
+    <!-- Input students -->
+    <g transform="translate(20, 38)">
+      <rect x="0" y="0" width="120" height="26" rx="4" fill="#141620" stroke="#2a2f3e"/>
+      <text x="60" y="17" font-size="10" fill="#e2e4ea" text-anchor="middle">Alice</text>
+      <rect x="0" y="32" width="120" height="26" rx="4" fill="#141620" stroke="#2a2f3e"/>
+      <text x="60" y="49" font-size="10" fill="#e2e4ea" text-anchor="middle">Bob</text>
+      <rect x="0" y="64" width="120" height="26" rx="4" fill="#141620" stroke="#2a2f3e"/>
+      <text x="60" y="81" font-size="10" fill="#e2e4ea" text-anchor="middle">Charlie</text>
+    </g>
+
+    <!-- Arrow -->
+    <g transform="translate(155, 75)">
+      <line x1="0" y1="0" x2="50" y2="0" stroke="#f87171" stroke-width="2"/>
+      <polygon points="50,-5 62,0 50,5" fill="#f87171"/>
+      <text x="30" y="-9" font-size="8" fill="#f87171" text-anchor="middle">map</text>
+    </g>
+
+    <!-- Result: nested lists -->
+    <g transform="translate(230, 34)">
+      <text x="90" y="-2" font-size="9" fill="#8b90a0" text-anchor="middle">List&lt;List&lt;String&gt;&gt;</text>
+      <rect x="0" y="6" width="180" height="26" rx="4" fill="#f871711a" stroke="#f87171" stroke-dasharray="3,2"/>
+      <text x="90" y="23" font-size="9.5" fill="#e2e4ea" text-anchor="middle">[CS101, CS201, MATH301]</text>
+      <rect x="0" y="38" width="180" height="26" rx="4" fill="#f871711a" stroke="#f87171" stroke-dasharray="3,2"/>
+      <text x="90" y="55" font-size="9.5" fill="#e2e4ea" text-anchor="middle">[CS101, CS301]</text>
+      <rect x="0" y="70" width="180" height="26" rx="4" fill="#f871711a" stroke="#f87171" stroke-dasharray="3,2"/>
+      <text x="90" y="87" font-size="9.5" fill="#e2e4ea" text-anchor="middle">[MATH301, MATH201, CS101]</text>
+    </g>
+
+    <!-- Wrong label -->
+    <g transform="translate(430, 65)">
+      <text x="0" y="0" font-size="22" fill="#f87171">✗</text>
+      <text x="28" y="-2" font-size="10" fill="#f87171">Still nested!</text>
+      <text x="28" y="12" font-size="9" fill="#6b7280">Each element is a List</text>
+    </g>
+
+    <!-- ============ DIVIDER ============ -->
+    <line x1="20" y1="195" x2="800" y2="195" stroke="#2a2f3e" stroke-width="1" stroke-dasharray="6,4"/>
+    <text x="410" y="210" font-size="9" fill="#6b7280" text-anchor="middle">vs.</text>
+
+    <!-- ============ BOTTOM HALF: flatMap ============ -->
+    <text x="410" y="238" font-size="12" fill="#6ee7b7" text-anchor="middle" font-weight="700" letter-spacing="0.04em">.flatMap(s → s.enrolledCourses().stream())</text>
+
+    <!-- Input students -->
+    <g transform="translate(20, 256)">
+      <rect x="0" y="0" width="120" height="26" rx="4" fill="#141620" stroke="#2a2f3e"/>
+      <text x="60" y="17" font-size="10" fill="#e2e4ea" text-anchor="middle">Alice</text>
+      <rect x="0" y="32" width="120" height="26" rx="4" fill="#141620" stroke="#2a2f3e"/>
+      <text x="60" y="49" font-size="10" fill="#e2e4ea" text-anchor="middle">Bob</text>
+      <rect x="0" y="64" width="120" height="26" rx="4" fill="#141620" stroke="#2a2f3e"/>
+      <text x="60" y="81" font-size="10" fill="#e2e4ea" text-anchor="middle">Charlie</text>
+    </g>
+
+    <!-- Step 1: map to streams -->
+    <g transform="translate(155, 290)">
+      <line x1="0" y1="0" x2="40" y2="0" stroke="#6ee7b7" stroke-width="2"/>
+      <polygon points="40,-5 52,0 40,5" fill="#6ee7b7"/>
+      <text x="25" y="-9" font-size="8" fill="#6ee7b7" text-anchor="middle">①map</text>
+    </g>
+
+    <!-- Intermediate streams -->
+    <g transform="translate(220, 252)">
+      <text x="85" y="-2" font-size="9" fill="#8b90a0" text-anchor="middle">individual streams</text>
+      <rect x="0" y="6" width="170" height="26" rx="4" fill="#6ee7b71a" stroke="#6ee7b7" stroke-width="1" opacity="0.7"/>
+      <text x="85" y="23" font-size="9" fill="#6ee7b7" text-anchor="middle">CS101 → CS201 → MATH301</text>
+      <rect x="0" y="38" width="170" height="26" rx="4" fill="#6ee7b71a" stroke="#6ee7b7" stroke-width="1" opacity="0.7"/>
+      <text x="85" y="55" font-size="9" fill="#6ee7b7" text-anchor="middle">CS101 → CS301</text>
+      <rect x="0" y="70" width="170" height="26" rx="4" fill="#6ee7b71a" stroke="#6ee7b7" stroke-width="1" opacity="0.7"/>
+      <text x="85" y="87" font-size="9" fill="#6ee7b7" text-anchor="middle">MATH301→MATH201→CS101</text>
+    </g>
+
+    <!-- Step 2: flatten arrow -->
+    <g transform="translate(405, 290)">
+      <line x1="0" y1="0" x2="40" y2="0" stroke="#6ee7b7" stroke-width="2"/>
+      <polygon points="40,-5 52,0 40,5" fill="#6ee7b7"/>
+      <text x="25" y="-9" font-size="8" fill="#6ee7b7" text-anchor="middle">②flatten</text>
+    </g>
+
+    <!-- Final flat stream -->
+    <g transform="translate(470, 252)">
+      <text x="160" y="-2" font-size="9" fill="#8b90a0" text-anchor="middle">Stream&lt;String&gt; — FLAT!</text>
+      <rect x="0" y="6" width="72" height="24" rx="4" fill="#141620" stroke="#6ee7b7"/>
+      <text x="36" y="22" font-size="9" fill="#e2e4ea" text-anchor="middle">CS101</text>
+      <rect x="78" y="6" width="72" height="24" rx="4" fill="#141620" stroke="#6ee7b7"/>
+      <text x="114" y="22" font-size="9" fill="#e2e4ea" text-anchor="middle">CS201</text>
+      <rect x="156" y="6" width="82" height="24" rx="4" fill="#141620" stroke="#6ee7b7"/>
+      <text x="197" y="22" font-size="9" fill="#e2e4ea" text-anchor="middle">MATH301</text>
+      <rect x="244" y="6" width="72" height="24" rx="4" fill="#141620" stroke="#6ee7b7"/>
+      <text x="280" y="22" font-size="9" fill="#e2e4ea" text-anchor="middle">CS101</text>
+
+      <rect x="0" y="36" width="72" height="24" rx="4" fill="#141620" stroke="#6ee7b7"/>
+      <text x="36" y="52" font-size="9" fill="#e2e4ea" text-anchor="middle">CS301</text>
+      <rect x="78" y="36" width="82" height="24" rx="4" fill="#141620" stroke="#6ee7b7"/>
+      <text x="119" y="52" font-size="9" fill="#e2e4ea" text-anchor="middle">MATH301</text>
+      <rect x="166" y="36" width="82" height="24" rx="4" fill="#141620" stroke="#6ee7b7"/>
+      <text x="207" y="52" font-size="9" fill="#e2e4ea" text-anchor="middle">MATH201</text>
+      <rect x="254" y="36" width="62" height="24" rx="4" fill="#141620" stroke="#6ee7b7"/>
+      <text x="285" y="52" font-size="9" fill="#e2e4ea" text-anchor="middle">CS101</text>
+
+      <text x="160" y="82" font-size="10" fill="#6ee7b7" text-anchor="middle">All elements in one flat stream</text>
+    </g>
+
+    <!-- Correct label -->
+    <g transform="translate(700, 342)">
+      <text x="0" y="0" font-size="22" fill="#6ee7b7">✓</text>
+      <text x="28" y="-2" font-size="10" fill="#6ee7b7">Flat!</text>
+    </g>
+
+  </svg>
+</div>
+
+<h3>2.2 — The Solution</h3>
+
+<div class="sig"><span class="ty">Stream</span>&lt;R&gt; <span class="mt">flatMap</span>(<span class="ty">Function</span>&lt;T, <span class="ty">Stream</span>&lt;R&gt;&gt; mapper)</div>
+
+<p><code>flatMap</code> maps each element to a <em>stream</em>, then concatenates all those streams into one.</p>
+
+<pre><span class="label">Example 2a</span>
+<span class="cm">// All unique course codes across all students</span>
+<span class="ty">List</span>&lt;<span class="ty">String</span>&gt; allCourses = students.<span class="mt">stream</span>()
+    .<span class="mt">flatMap</span>(s <span class="op">-&gt;</span> s.<span class="mt">enrolledCourses</span>().<span class="mt">stream</span>())
+    .<span class="mt">distinct</span>()
+    .<span class="mt">sorted</span>()
+    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">toList</span>());
+</pre>
+
+<div class="output">[CS101, CS201, CS301, MATH201, MATH301, PHYS101, PHYS201]</div>
+
+<div class="concept-box">
+  <strong>Mental model</strong>
+  <code>map</code> transforms 1 element → 1 element (shape stays the same).
+  <code>flatMap</code> transforms 1 element → 0..N elements (flattens one level).
+</div>
+
+<h3>2.3 — flatMap for Data Enrichment</h3>
+
+<p>A common pattern: create a <em>pair</em> for every combination of student and course, essentially "exploding" each student into multiple rows.</p>
+
+<pre><span class="label">Example 2b</span>
+<span class="cm">// Produce a record for every (student, course) pair</span>
+<span class="kw">record</span> <span class="ty">Enrollment</span>(<span class="ty">String</span> studentName, <span class="ty">String</span> courseCode) {}
+
+<span class="ty">List</span>&lt;<span class="ty">Enrollment</span>&gt; enrollments = students.<span class="mt">stream</span>()
+    .<span class="mt">flatMap</span>(s <span class="op">-&gt;</span> s.<span class="mt">enrolledCourses</span>().<span class="mt">stream</span>()
+        .<span class="mt">map</span>(c <span class="op">-&gt;</span> <span class="kw">new</span> <span class="ty">Enrollment</span>(s.<span class="mt">name</span>(), c))
+    )
+    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">toList</span>());
+</pre>
+
+<div class="output">[(Alice, CS101), (Alice, CS201), (Alice, MATH301), (Bob, CS101), (Bob, CS301), ...]</div>
+
+<h3>2.4 — Combining flatMap with Collectors</h3>
+
+<p>Now the two sections come together. What if we want to know which students are in each course?</p>
+
+<pre><span class="label">Example 2c — flatMap + groupingBy</span>
+<span class="cm">// Build a reverse index: course code → list of student names</span>
+<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">List</span>&lt;<span class="ty">String</span>&gt;&gt; courseRoster = students.<span class="mt">stream</span>()
+    .<span class="mt">flatMap</span>(s <span class="op">-&gt;</span> s.<span class="mt">enrolledCourses</span>().<span class="mt">stream</span>()
+        .<span class="mt">map</span>(c <span class="op">-&gt;</span> <span class="ty">Map</span>.<span class="mt">entry</span>(c, s.<span class="mt">name</span>()))
+    )
+    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">groupingBy</span>(
+        <span class="ty">Map.Entry</span>::getKey,
+        <span class="ty">Collectors</span>.<span class="mt">mapping</span>(<span class="ty">Map.Entry</span>::getValue, <span class="ty">Collectors</span>.<span class="mt">toList</span>())
+    ));
+</pre>
+
+<div class="output">{CS101=[Alice, Bob, Charlie, Frank], CS201=[Alice, Eve], CS301=[Bob],
+ MATH201=[Charlie, Diana, Grace], MATH301=[Alice, Charlie, Eve],
+ PHYS101=[Diana, Eve, Grace], PHYS201=[Grace]}</div>
+
+<div class="concept-box info">
+  <strong>The Map.entry trick</strong>
+  When you need to carry <em>two</em> pieces of data through a flatMap, wrapping them in a <code>Map.Entry</code> (or a record) is a clean, allocation-light approach. This avoids defining throwaway classes.
+</div>
+
+<!-- ===== EXERCISES ===== -->
+<h2><span class="num">3.</span> Exercises</h2>
+
+<div class="exercise">
+  <p><strong>Exercise 1 — groupingBy with downstream</strong></p>
+  <ol>
+    <li>Group students by major and find the <em>maximum</em> GPA in each group. <em>Hint: <code>Collectors.maxBy(...)</code></em></li>
+    <li>Group students by major and collect a <em>sorted set</em> of their names. <em>Hint: use <code>mapping</code> with <code>toCollection(TreeSet::new)</code></em></li>
+  </ol>
+</div>
+
+<div class="exercise">
+  <p><strong>Exercise 2 — toMap</strong></p>
+  <ol>
+    <li>Create a map of <code>studentName → numberOfCoursesEnrolled</code>.</li>
+    <li>Create a map of <code>major → totalEnrollments</code> (sum of all courses across all students in that major). You'll need a merge function.</li>
+  </ol>
+</div>
+
+<div class="exercise">
+  <p><strong>Exercise 3 — flatMap</strong></p>
+  <ol>
+    <li>Find the <em>most popular course</em> — the one that appears in the most students' enrollment lists. Return the course code and count.</li>
+    <li>Find all pairs of students who share at least one course. Return a <code>Set&lt;String&gt;</code> of descriptions like <code>"Alice &amp; Bob both take CS101"</code>.</li>
+  </ol>
+</div>
+
+<div class="exercise">
+  <p><strong>Exercise 4 — Challenge: multi-level grouping</strong></p>
+  <ol>
+    <li>Group students first by major, then within each major by whether they are honors (GPA ≥ 3.5). The result type should be <code>Map&lt;String, Map&lt;Boolean, List&lt;Student&gt;&gt;&gt;</code>. <em>Hint: nested <code>groupingBy</code> and <code>partitioningBy</code>.</em></li>
+  </ol>
+</div>
+
+
+<div class="nav-footer">
+  <div>Lecture <span>1</span> of 2</div>
+  <div>Next → <span>reduce &amp; Parallel Streams</span></div>
+</div>
+
+</body>
+</html>

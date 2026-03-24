@@ -1,0 +1,112 @@
+{
+  "tests": [
+    {
+      "name": "StreamTaskExercises - highPriorityDescriptions",
+      "run": "mvn -q -B -ntp -Dtest=edu.touro.las.mcon364.streams.exercises.StreamTaskExercisesTest#highPriorityDescriptions_returnsDescriptionsInEncounterOrder test",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 8
+    },
+    {
+      "name": "StreamTaskExercises - countByStatus",
+      "run": "mvn -q -B -ntp -Dtest=edu.touro.las.mcon364.streams.exercises.StreamTaskExercisesTest#countByStatus_countsTasksPerStatus test",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 8
+    },
+    {
+      "name": "StreamTaskExercises - descriptionsByPriority",
+      "run": "mvn -q -B -ntp -Dtest=edu.touro.las.mcon364.streams.exercises.StreamTaskExercisesTest#descriptionsByPriority_groupsDescriptionsByPriority test",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 8
+    },
+    {
+      "name": "StreamTaskExercises - partitionByDone",
+      "run": "mvn -q -B -ntp -Dtest=edu.touro.las.mcon364.streams.exercises.StreamTaskExercisesTest#partitionByDone_splitsTasksIntoTrueAndFalseBuckets test",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 8
+    },
+    {
+      "name": "StreamTaskExercises - countDonePartition",
+      "run": "mvn -q -B -ntp -Dtest=edu.touro.las.mcon364.streams.exercises.StreamTaskExercisesTest#countDonePartition_countsDoneAndNotDone test",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 8
+    },
+    {
+      "name": "StreamTaskExercises - groupByStatusThenPriority",
+      "run": "mvn -q -B -ntp -Dtest=edu.touro.las.mcon364.streams.exercises.StreamTaskExercisesTest#groupByStatusThenPriority_buildsNestedGrouping test",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 8
+    },
+    {
+      "name": "StreamTaskExercises - sortedDescriptionsByStatus",
+      "run": "mvn -q -B -ntp -Dtest=edu.touro.las.mcon364.streams.exercises.StreamTaskExercisesTest#sortedDescriptionsByStatus_groupsAndSortsDescriptionsAlphabetically test",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 8
+    },
+    {
+      "name": "StreamTaskExercises - doneTaskSummary",
+      "run": "mvn -q -B -ntp -Dtest=edu.touro.las.mcon364.streams.exercises.StreamTaskExercisesTest#doneTaskSummary_joinsDoneDescriptionsInEncounterOrder test",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 8
+    },
+    {
+      "name": "StreamTaskExercises - allTags",
+      "run": "mvn -q -B -ntp -Dtest=edu.touro.las.mcon364.streams.exercises.StreamTaskExercisesTest#allTags_flattensTagsInEncounterOrder test",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 9
+    },
+    {
+      "name": "StreamTaskExercises - distinctDoneAssignees",
+      "run": "mvn -q -B -ntp -Dtest=edu.touro.las.mcon364.streams.exercises.StreamTaskExercisesTest#distinctDoneAssignees_returnsDistinctAssigneesForDoneItemsInOrder test",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 9
+    },
+    {
+      "name": "StreamTaskExercises - idToStatus",
+      "run": "mvn -q -B -ntp -Dtest=edu.touro.las.mcon364.streams.exercises.StreamTaskExercisesTest#idToStatus_buildsMapFromIdToStatus test",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 9
+    },
+    {
+      "name": "StreamTaskExercises - titlesByPriorityUsingMapping",
+      "run": "mvn -q -B -ntp -Dtest=edu.touro.las.mcon364.streams.exercises.StreamTaskExercisesTest#titlesByPriorityUsingMapping_groupsTitlesByPriority test",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 9
+    }
+  ]
+}

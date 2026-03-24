@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Java Streams — Lecture 2: reduce &amp; Parallel Streams</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181b24;
+    --surface-raised: #1e2230;
+    --border: #2a2f3e;
+    --text: #e2e4ea;
+    --text-dim: #8b90a0;
+    --accent: #6ee7b7;
+    --accent-dim: #34d3991a;
+    --accent2: #818cf8;
+    --accent2-dim: #818cf81a;
+    --warn: #fbbf24;
+    --warn-dim: #fbbf241a;
+    --error: #f87171;
+    --error-dim: #f871711a;
+    --code-bg: #141620;
+    --code-border: #252a3a;
+    --keyword: #c084fc;
+    --string: #6ee7b7;
+    --type: #818cf8;
+    --comment: #6b7280;
+    --method: #fbbf24;
+    --number: #f472b6;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 0 1.5rem 6rem;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+
+  header {
+    padding: 4rem 0 3rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 3rem;
+  }
+
+  header .tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    background: var(--accent2-dim);
+    padding: 0.3rem 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+
+  header h1 {
+    font-family: 'Source Serif 4', serif;
+    font-size: 2.8rem;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.75rem;
+  }
+
+  header h1 span { color: var(--accent2); }
+
+  header .subtitle {
+    font-size: 1.15rem;
+    color: var(--text-dim);
+    max-width: 620px;
+  }
+
+  h2 {
+    font-family: 'Source Serif 4', serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    margin: 3.5rem 0 1rem;
+    letter-spacing: -0.015em;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  h2 .num {
+    color: var(--accent2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    margin-right: 0.4rem;
+  }
+
+  h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 2rem 0 0.75rem;
+    color: var(--accent);
+  }
+
+  p { margin-bottom: 1rem; font-size: 1.02rem; }
+
+  .concept-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+
+  .concept-box.warn {
+    border-left-color: var(--warn);
+    background: var(--warn-dim);
+  }
+
+  .concept-box.info {
+    border-left-color: var(--accent2);
+    background: var(--accent2-dim);
+  }
+
+  .concept-box.danger {
+    border-left-color: var(--error);
+    background: var(--error-dim);
+  }
+
+  .concept-box strong {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.92rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .concept-box.warn strong { color: var(--warn); }
+  .concept-box.info strong { color: var(--accent2); }
+  .concept-box.danger strong { color: var(--error); }
+  .concept-box strong { color: var(--accent); }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+    margin: 1.25rem 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    position: relative;
+  }
+
+  pre .label {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: var(--surface-raised);
+    color: var(--text-dim);
+    padding: 0.25rem 0.65rem;
+    border-radius: 0 8px 0 6px;
+    border-left: 1px solid var(--code-border);
+    border-bottom: 1px solid var(--code-border);
+  }
+
+  .kw { color: var(--keyword); }
+  .st { color: var(--string); }
+  .ty { color: var(--type); }
+  .cm { color: var(--comment); font-style: italic; }
+  .mt { color: var(--method); }
+  .nb { color: var(--number); }
+  .op { color: var(--text-dim); }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--surface-raised);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.88em;
+    color: var(--accent2);
+  }
+
+  .exercise {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    position: relative;
+  }
+
+  .exercise::before {
+    content: '✏️ EXERCISE';
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--warn);
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+
+  .exercise ol { padding-left: 1.25rem; }
+  .exercise li { margin-bottom: 0.5rem; }
+
+  .output {
+    background: #0d0f14;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 0.85rem 1.25rem;
+    margin: 0.75rem 0 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--accent);
+    white-space: pre-wrap;
+  }
+
+  .output::before {
+    content: '▸ Output';
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .sig {
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+    overflow-x: auto;
+  }
+
+  .vs-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.92rem;
+  }
+
+  .vs-table th, .vs-table td {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .vs-table th {
+    background: var(--surface);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+  }
+
+  .vs-table td { background: var(--code-bg); }
+  .vs-table .yes { color: var(--accent); }
+  .vs-table .no { color: var(--error); }
+
+  .nav-footer {
+    margin-top: 4rem;
+    padding: 2rem 0;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+
+  .nav-footer span { color: var(--accent2); font-weight: 600; }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .toc h4 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+  }
+
+  .toc ul { list-style: none; }
+
+  .toc li {
+    padding: 0.35rem 0;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+
+  .toc li::before {
+    content: '→ ';
+    color: var(--accent2);
+    font-weight: 600;
+  }
+
+  @media (max-width: 700px) {
+    header h1 { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="tag">Lecture 2 of 2</div>
+  <h1>Advanced Streams: <span>reduce &amp; Parallel Streams</span></h1>
+  <p class="subtitle">Learn to fold data with reduce, understand the rules for correct accumulation, and unlock multi-core performance with parallel streams.</p>
+</header>
+
+<div class="toc">
+  <h4>Today's Agenda</h4>
+  <ul>
+    <li>Recall: the same domain model from Lecture 1</li>
+    <li>reduce — the general-purpose folding operation</li>
+    <li>Custom accumulators and the combiner contract</li>
+    <li>Parallel streams — when, why, and the pitfalls</li>
+    <li>Performance: when parallel actually helps</li>
+    <li>Exercises</li>
+  </ul>
+</div>
+
+
+<!-- ===== SECTION 1: REDUCE ===== -->
+<h2><span class="num">1.</span> reduce — The Universal Aggregator</h2>
+
+<p>Every terminal operation that produces a single result (<code>count</code>, <code>sum</code>, <code>min</code>, <code>max</code>) can be expressed as a <code>reduce</code>. Understanding reduce means understanding what's really happening under the hood.</p>
+
+<h3>1.1 — The Two-Argument reduce</h3>
+
+<div class="sig"><span class="ty">Optional</span>&lt;T&gt; <span class="mt">reduce</span>(<span class="ty">BinaryOperator</span>&lt;T&gt; accumulator)</div>
+
+<p>Takes pairs of elements and combines them down to one. Returns <code>Optional</code> because the stream might be empty.</p>
+
+<pre><span class="label">Example 1a — sum of all GPAs</span>
+<span class="ty">Optional</span>&lt;<span class="ty">Double</span>&gt; totalGpa = students.<span class="mt">stream</span>()
+    .<span class="mt">map</span>(<span class="ty">Student</span>::gpa)
+    .<span class="mt">reduce</span>(<span class="ty">Double</span>::<span class="mt">sum</span>);
+<span class="cm">// totalGpa = Optional[24.6]</span>
+</pre>
+
+<pre><span class="label">Example 1b — longest name</span>
+<span class="ty">Optional</span>&lt;<span class="ty">String</span>&gt; longest = students.<span class="mt">stream</span>()
+    .<span class="mt">map</span>(<span class="ty">Student</span>::name)
+    .<span class="mt">reduce</span>((a, b) <span class="op">-&gt;</span> a.<span class="mt">length</span>() >= b.<span class="mt">length</span>() ? a : b);
+<span class="cm">// longest = Optional[Charlie]</span>
+</pre>
+
+<h3>1.2 — The Three-Argument reduce (with identity)</h3>
+
+<div class="sig">T <span class="mt">reduce</span>(T identity, <span class="ty">BinaryOperator</span>&lt;T&gt; accumulator)</div>
+
+<p>Provides a starting value. Now the result is a plain <code>T</code>, not an <code>Optional</code>, because if the stream is empty we simply return the identity.</p>
+
+<pre><span class="label">Example 1c</span>
+<span class="cm">// Total number of course enrollments across all students</span>
+<span class="kw">int</span> totalEnrollments = students.<span class="mt">stream</span>()
+    .<span class="mt">map</span>(s <span class="op">-&gt;</span> s.<span class="mt">enrolledCourses</span>().<span class="mt">size</span>())
+    .<span class="mt">reduce</span>(<span class="nb">0</span>, <span class="ty">Integer</span>::<span class="mt">sum</span>);
+<span class="cm">// totalEnrollments = 17</span>
+</pre>
+
+<div class="concept-box">
+  <strong>The identity contract</strong>
+  The identity value must be the "zero" of the operation: <code>accumulator(identity, x) == x</code> for all x.
+  For addition → <code>0</code>. For multiplication → <code>1</code>. For string concatenation → <code>""</code>. For max → <code>Integer.MIN_VALUE</code>.
+</div>
+
+<h3>1.3 — Reduce to a Different Type (Three-Arg with Combiner)</h3>
+
+<p>What if the result type is different from the element type? The three-argument form handles this:</p>
+
+<div class="sig">&lt;U&gt; U <span class="mt">reduce</span>(U identity, <span class="ty">BiFunction</span>&lt;U, T, U&gt; accumulator, <span class="ty">BinaryOperator</span>&lt;U&gt; combiner)</div>
+
+<pre><span class="label">Example 1d — build a comma-separated string from names</span>
+<span class="ty">String</span> allNames = students.<span class="mt">stream</span>()
+    .<span class="mt">reduce</span>(
+        <span class="st">""</span>,                                           <span class="cm">// identity</span>
+        (str, student) <span class="op">-&gt;</span>                              <span class="cm">// accumulator: String × Student → String</span>
+            str.<span class="mt">isEmpty</span>() ? student.<span class="mt">name</span>()
+                         : str + <span class="st">", "</span> + student.<span class="mt">name</span>(),
+        (s1, s2) <span class="op">-&gt;</span> s1.<span class="mt">isEmpty</span>() ? s2                  <span class="cm">// combiner: String × String → String</span>
+                   : s2.<span class="mt">isEmpty</span>() ? s1
+                   : s1 + <span class="st">", "</span> + s2
+    );
+</pre>
+
+<div class="output">Alice, Bob, Charlie, Diana, Eve, Frank, Grace</div>
+
+<div class="concept-box warn">
+  <strong>When do you need the combiner?</strong>
+  The combiner is only used in <strong>parallel</strong> streams to merge partial results from different threads. But you <em>must</em> provide it even for sequential streams when using this overload. Make sure it's consistent with the accumulator — we'll see why in Section 2.
+</div>
+
+<h3>1.4 — Practical reduce: Building a Summary Object</h3>
+
+<pre><span class="label">Example 1e — accumulate into a custom summary</span>
+<span class="kw">record</span> <span class="ty">MajorStats</span>(<span class="kw">int</span> count, <span class="kw">double</span> totalGpa) {
+    <span class="ty">MajorStats</span> <span class="mt">add</span>(<span class="ty">Student</span> s) {
+        <span class="kw">return new</span> <span class="ty">MajorStats</span>(count + <span class="nb">1</span>, totalGpa + s.<span class="mt">gpa</span>());
+    }
+    <span class="ty">MajorStats</span> <span class="mt">merge</span>(<span class="ty">MajorStats</span> other) {
+        <span class="kw">return new</span> <span class="ty">MajorStats</span>(count + other.count, totalGpa + other.totalGpa);
+    }
+    <span class="kw">double</span> <span class="mt">averageGpa</span>() { <span class="kw">return</span> count == <span class="nb">0</span> ? <span class="nb">0</span> : totalGpa / count; }
+}
+
+<span class="ty">MajorStats</span> csStats = students.<span class="mt">stream</span>()
+    .<span class="mt">filter</span>(s <span class="op">-&gt;</span> s.<span class="mt">major</span>().<span class="mt">equals</span>(<span class="st">"CS"</span>))
+    .<span class="mt">reduce</span>(
+        <span class="kw">new</span> <span class="ty">MajorStats</span>(<span class="nb">0</span>, <span class="nb">0.0</span>),  <span class="cm">// identity</span>
+        <span class="ty">MajorStats</span>::add,              <span class="cm">// accumulator</span>
+        <span class="ty">MajorStats</span>::merge             <span class="cm">// combiner</span>
+    );
+
+<span class="ty">System</span>.out.<span class="mt">println</span>(csStats);           <span class="cm">// MajorStats[count=3, totalGpa=9.9]</span>
+<span class="ty">System</span>.out.<span class="mt">println</span>(csStats.<span class="mt">averageGpa</span>()); <span class="cm">// 3.3</span>
+</pre>
+
+<div class="concept-box info">
+  <strong>reduce vs collect</strong>
+  <code>reduce</code> produces <em>immutable</em> intermediate values — each step creates a new object. <code>collect</code> (via <code>Collector</code>) uses a <em>mutable</em> container. For building up collections, strings, or large objects, <code>collect</code> is more efficient. Use <code>reduce</code> when combining values (sums, products, statistics) or when immutability is important.
+</div>
+
+
+<!-- ===== SECTION 2: PARALLEL STREAMS ===== -->
+<h2><span class="num">2.</span> Parallel Streams</h2>
+
+<p>Java streams can execute on multiple threads with a single method call. But "easy to write" doesn't mean "always a good idea."</p>
+
+<h3>2.1 — Making a Stream Parallel</h3>
+
+<pre><span class="label">Example 2a — two ways to go parallel</span>
+<span class="cm">// Option 1: from the source</span>
+students.<span class="mt">parallelStream</span>()
+    .<span class="mt">filter</span>(s <span class="op">-&gt;</span> s.<span class="mt">gpa</span>() > <span class="nb">3.5</span>)
+    .<span class="mt">map</span>(<span class="ty">Student</span>::name)
+    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">toList</span>());
+
+<span class="cm">// Option 2: convert mid-pipeline</span>
+students.<span class="mt">stream</span>()
+    .<span class="mt">parallel</span>()
+    .<span class="mt">filter</span>(s <span class="op">-&gt;</span> s.<span class="mt">gpa</span>() > <span class="nb">3.5</span>)
+    .<span class="mt">map</span>(<span class="ty">Student</span>::name)
+    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">toList</span>());
+</pre>
+
+<div class="concept-box">
+  <strong>Under the hood</strong>
+  Parallel streams use the <em>ForkJoinPool.commonPool()</em>. The source is split (via <code>Spliterator</code>), each chunk is processed on a separate thread, and results are combined. The combining step is why reduce's <em>combiner</em> and collector's <em>combiner</em> exist.
+</div>
+
+<h3>2.2 — The Rules for Correct Parallelism</h3>
+
+<p>For a parallel stream to produce the same result as a sequential one, your operations must satisfy three properties:</p>
+
+<table class="vs-table">
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Meaning</th>
+      <th>Example violation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Stateless</strong></td>
+      <td>Lambdas must not read/write shared mutable state</td>
+      <td>Incrementing an external counter inside <code>map</code></td>
+    </tr>
+    <tr>
+      <td><strong>Non-interfering</strong></td>
+      <td>Don't modify the source during execution</td>
+      <td>Calling <code>list.remove()</code> inside <code>forEach</code></td>
+    </tr>
+    <tr>
+      <td><strong>Associative</strong></td>
+      <td><code>(a ⊕ b) ⊕ c == a ⊕ (b ⊕ c)</code></td>
+      <td>Subtraction: <code>(10-5)-2 ≠ 10-(5-2)</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>2.3 — Classic Bug: Shared Mutable State</h3>
+
+<pre><span class="label">Example 2b — WRONG: race condition</span>
+<span class="cm">// DON'T DO THIS — data race with parallel stream</span>
+<span class="ty">List</span>&lt;<span class="ty">String</span>&gt; results = <span class="kw">new</span> <span class="ty">ArrayList</span>&lt;&gt;();
+
+students.<span class="mt">parallelStream</span>()
+    .<span class="mt">filter</span>(s <span class="op">-&gt;</span> s.<span class="mt">gpa</span>() > <span class="nb">3.0</span>)
+    .<span class="mt">forEach</span>(s <span class="op">-&gt;</span> results.<span class="mt">add</span>(s.<span class="mt">name</span>()));  <span class="cm">// ⚠️ ArrayList is NOT thread-safe</span>
+<span class="cm">// Possible: missing elements, ArrayIndexOutOfBoundsException, corrupted list</span>
+</pre>
+
+<pre><span class="label">Example 2c — CORRECT: let the collector handle it</span>
+<span class="ty">List</span>&lt;<span class="ty">String</span>&gt; results = students.<span class="mt">parallelStream</span>()
+    .<span class="mt">filter</span>(s <span class="op">-&gt;</span> s.<span class="mt">gpa</span>() > <span class="nb">3.0</span>)
+    .<span class="mt">map</span>(<span class="ty">Student</span>::name)
+    .<span class="mt">collect</span>(<span class="ty">Collectors</span>.<span class="mt">toList</span>());  <span class="cm">// ✅ Thread-safe: each thread has its own list</span>
+</pre>
+
+<div class="concept-box danger">
+  <strong>The golden rule</strong>
+  Never accumulate into a shared mutable container from a stream — use <code>collect</code>. This applies to sequential streams too (for clarity), but with parallel streams it causes actual concurrency bugs.
+</div>
+
+<h3>2.4 — Ordering Guarantees</h3>
+
+<pre><span class="label">Example 2d — forEachOrdered preserves encounter order</span>
+<span class="cm">// forEach with parallel: order is non-deterministic</span>
+students.<span class="mt">parallelStream</span>().<span class="mt">map</span>(<span class="ty">Student</span>::name)
+    .<span class="mt">forEach</span>(<span class="ty">System</span>.out::<span class="mt">println</span>);
+<span class="cm">// Could print: Eve, Alice, Frank, Diana, Bob, Grace, Charlie</span>
+
+<span class="cm">// forEachOrdered: preserves original list order (but loses some parallelism)</span>
+students.<span class="mt">parallelStream</span>().<span class="mt">map</span>(<span class="ty">Student</span>::name)
+    .<span class="mt">forEachOrdered</span>(<span class="ty">System</span>.out::<span class="mt">println</span>);
+<span class="cm">// Always: Alice, Bob, Charlie, Diana, Eve, Frank, Grace</span>
+</pre>
+
+<div class="concept-box info">
+  <strong>collect preserves order</strong>
+  Even in parallel streams, <code>.collect(Collectors.toList())</code> preserves encounter order. The framework handles the merge correctly. You only lose ordering with <code>forEach</code> and <em>unordered</em> collectors.
+</div>
+
+
+<!-- ===== SECTION 3: PERFORMANCE ===== -->
+<h2><span class="num">3.</span> When Does Parallel Actually Help?</h2>
+
+<p>Parallel streams have overhead: splitting, thread scheduling, combining. That overhead is only worth it when the <em>per-element work</em> or <em>element count</em> is large enough.</p>
+
+<h3>3.1 — Rules of Thumb</h3>
+
+<table class="vs-table">
+  <thead>
+    <tr>
+      <th>Factor</th>
+      <th>Favors Parallel</th>
+      <th>Favors Sequential</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Data size</td>
+      <td class="yes">10,000+ elements</td>
+      <td class="no">&lt; 1,000 elements</td>
+    </tr>
+    <tr>
+      <td>Per-element cost</td>
+      <td class="yes">Expensive (I/O, computation)</td>
+      <td class="no">Trivial (field access, comparison)</td>
+    </tr>
+    <tr>
+      <td>Source splittability</td>
+      <td class="yes">ArrayList, arrays, IntRange</td>
+      <td class="no">LinkedList, Stream.iterate, I/O streams</td>
+    </tr>
+    <tr>
+      <td>Terminal operation</td>
+      <td class="yes">reduce, collect, toArray</td>
+      <td class="no">forEachOrdered, findFirst (order-dependent)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>3.2 — Benchmarking Parallel vs Sequential</h3>
+
+<pre><span class="label">Example 3a — demonstrating with a CPU-bound task</span>
+<span class="cm">// Simulate expensive computation per student</span>
+<span class="kw">private static double</span> <span class="mt">expensiveGpaCalculation</span>(<span class="ty">Student</span> s) {
+    <span class="cm">// Simulate work with a spin-wait (DON'T do this in production)</span>
+    <span class="kw">long</span> start = <span class="ty">System</span>.<span class="mt">nanoTime</span>();
+    <span class="kw">while</span> (<span class="ty">System</span>.<span class="mt">nanoTime</span>() - start < <span class="nb">1_000_000</span>) {} <span class="cm">// ~1ms per student</span>
+    <span class="kw">return</span> s.<span class="mt">gpa</span>() * <span class="nb">4.0</span> / <span class="nb">4.0</span>;
+}
+
+<span class="cm">// With a large list (e.g., 10,000 students), parallel shows real gains:</span>
+<span class="kw">long</span> start = <span class="ty">System</span>.<span class="mt">nanoTime</span>();
+
+<span class="kw">double</span> avg = bigStudentList.<span class="mt">parallelStream</span>()      <span class="cm">// swap with .stream() to compare</span>
+    .<span class="mt">mapToDouble</span>(s <span class="op">-&gt;</span> <span class="mt">expensiveGpaCalculation</span>(s))
+    .<span class="mt">average</span>()
+    .<span class="mt">orElse</span>(<span class="nb">0</span>);
+
+<span class="kw">long</span> elapsed = <span class="ty">System</span>.<span class="mt">nanoTime</span>() - start;
+<span class="ty">System</span>.out.<span class="mt">printf</span>(<span class="st">"Avg: %.2f in %d ms%n"</span>, avg, elapsed / <span class="nb">1_000_000</span>);
+</pre>
+
+<div class="concept-box warn">
+  <strong>Never micro-benchmark with System.nanoTime alone</strong>
+  For real performance testing, use JMH (Java Microbenchmark Harness). The example above is for classroom demonstration only. JVM warmup, JIT compilation, and garbage collection all affect results.
+</div>
+
+<h3>3.3 — The reduce Combiner in Action</h3>
+
+<p>Now we can see <em>why</em> reduce has a combiner. In parallel, each thread reduces its chunk independently, then the combiner merges the partial results:</p>
+
+<pre><span class="label">Example 3b — parallel reduce with combiner</span>
+<span class="cm">// Thread 1 reduces: [Alice, Bob, Charlie]   → MajorStats(3, 10.9)</span>
+<span class="cm">// Thread 2 reduces: [Diana, Eve, Frank, Grace] → MajorStats(4, 13.7)</span>
+<span class="cm">// Combiner merges:  MajorStats(3, 10.9).merge(MajorStats(4, 13.7))</span>
+<span class="cm">//                 = MajorStats(7, 24.6)</span>
+
+<span class="ty">MajorStats</span> allStats = students.<span class="mt">parallelStream</span>()
+    .<span class="mt">reduce</span>(
+        <span class="kw">new</span> <span class="ty">MajorStats</span>(<span class="nb">0</span>, <span class="nb">0.0</span>),
+        <span class="ty">MajorStats</span>::add,     <span class="cm">// accumulator: each thread builds its own</span>
+        <span class="ty">MajorStats</span>::merge    <span class="cm">// combiner: merges results from different threads</span>
+    );
+</pre>
+
+<div class="concept-box">
+  <strong>Combiner consistency rule</strong>
+  The combiner must produce the same result as sequential accumulation. Formally:
+  <code>combiner(u, accumulator(identity, t)) == accumulator(u, t)</code>.
+  If this doesn't hold, sequential and parallel will give different results.
+</div>
+
+<h3>3.4 — Quick Decision Flowchart</h3>
+
+<p>Ask yourself these questions before calling <code>.parallel()</code>:</p>
+
+<pre><span class="label">Decision Process</span>
+<span class="st">1.</span> Is the data source large (&gt;10K elements)?
+   └─ No  → stay sequential
+   └─ Yes → continue
+
+<span class="st">2.</span> Is the per-element operation expensive?
+   └─ No  → probably stay sequential
+   └─ Yes → continue
+
+<span class="st">3.</span> Is the source easily splittable? (ArrayList, array, range)
+   └─ No  → stay sequential
+   └─ Yes → continue
+
+<span class="st">4.</span> Are all lambdas stateless and non-interfering?
+   └─ No  → FIX THIS FIRST, then reconsider
+   └─ Yes → go parallel, then <span class="mt">benchmark to confirm</span>
+</pre>
+
+</body>
+</html>
