@@ -33,15 +33,46 @@ public class WeatherDataScienceExercise {
 
         // TODO 1:
         // Count how many valid weather records remain after cleaning.
+        int validCount= cleaned.size();
 
         // TODO 2:
         // Compute the average temperature across all valid rows.
+        // When we call .orElse(0.0), we are telling Java: Try to give me the avg,
+        // but if the stream was empty and no average exists, just give me 0.0 instead.
+        //This unwraps the value from the OptionalDouble container and turns it into a
+        // standard primitive double.
+        double avg= cleaned.stream()
+                .mapToDouble(weather-> weather.temperatureC) // or WeatherRecord::temperatureC
+                .average()
+                .orElse(0);
 
         // TODO 3:
         // Find the city with the highest average temperature.
+        String city_highest_avg= cleaned.stream()
+                //first we make a map of each city with their avg temp as the value
+                .collect(Collectors.groupingBy(
+                        WeatherRecord::city,
+                        Collectors.averagingDouble(WeatherRecord::temperatureC)))
+                // A Map itself is not a stream. To process it, we call .entrySet(),
+                // which turns the Map into a Set of Entry objects - Key, Value pairs, then we stream it
+                .entrySet().stream()
+                //take an entry and compare it by its value- which is the avg temp
+                // and then .max looks thru all objs to find one with highest temp value
+                .max(Map.Entry.comparingByValue())
+                //then we get the key- the nam eof the city with the highest temp
+                .map(Map.Entry::getKey)
+                //if the og list was empty, return NA to prevent crashes
+                .orElse("N/A");
 
         // TODO 4:
         // Group records by city.
+        //.collect is terminal op
+        // When you don't provide a second downstream collector, Java assumes you want to keep
+        // all the original objects and just sort them into buckets.
+        // so here the value would be WeatherRecord bc we streamed a list of them
+        Map<String, List<WeatherRecord>> byCity= cleaned.stream()
+                .collect(Collectors.groupingBy(WeatherRecord::city));
+
 
         // TODO 5:
         // Compute average precipitation by city.
