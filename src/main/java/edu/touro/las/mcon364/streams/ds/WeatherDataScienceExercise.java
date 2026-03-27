@@ -9,7 +9,7 @@ import java.util.stream.*;
 
 public class WeatherDataScienceExercise {
 
-    record WeatherRecord(
+    public record WeatherRecord(
             String stationId,
             String city,
             String date,
@@ -33,7 +33,7 @@ public class WeatherDataScienceExercise {
 
         // TODO 1:
         // Count how many valid weather records remain after cleaning.
-        int validCount= cleaned.size();
+        long validCount = countValidRecords(cleaned);
 
         // TODO 2:
         // Compute the average temperature across all valid rows.
@@ -41,28 +41,15 @@ public class WeatherDataScienceExercise {
         // but if the stream was empty and no average exists, just give me 0.0 instead.
         //This unwraps the value from the OptionalDouble container and turns it into a
         // standard primitive double.
-        double avg= cleaned.stream()
-                .mapToDouble(weather-> weather.temperatureC) // or WeatherRecord::temperatureC
+        double avg = cleaned.stream()
+                .mapToDouble(weather -> weather.temperatureC) // or WeatherRecord::temperatureC
                 .average()
                 .orElse(0);
 
-        // TODO 3:
+        // TODO 3: SEE BELOW -> findCityWithHighestAvgTemp()
         // Find the city with the highest average temperature.
-        String city_highest_avg= cleaned.stream()
-                //first we make a map of each city with their avg temp as the value
-                .collect(Collectors.groupingBy(
-                        WeatherRecord::city,
-                        Collectors.averagingDouble(WeatherRecord::temperatureC)))
-                // A Map itself is not a stream. To process it, we call .entrySet(),
-                // which turns the Map into a Set of Entry objects - Key, Value pairs, then we stream it
-                .entrySet().stream()
-                //take an entry and compare it by its value- which is the avg temp
-                // and then .max looks thru all objs to find one with highest temp value
-                .max(Map.Entry.comparingByValue())
-                //then we get the key- the nam eof the city with the highest temp
-                .map(Map.Entry::getKey)
-                //if the og list was empty, return NA to prevent crashes
-                .orElse("N/A");
+        String city_highest_avg = findCityWithHighestAvgTemp(cleaned);
+
 
         // TODO 4:
         // Group records by city.
@@ -105,22 +92,13 @@ public class WeatherDataScienceExercise {
                 .map(WeatherRecord::city)
                 .collect(Collectors.toSet());
 
-        // TODO 8:
+        // TODO 8: see findWettestDay() below
         // Find the wettest single day.
-        Optional<WeatherRecord> wettestDay = cleaned.stream()
-                .max(Comparator.comparingDouble(WeatherRecord::precipitationMm));
+        Optional<WeatherRecord> wettestDay = findWettestDay(cleaned);
         // To get a String for output:
         String result = wettestDay
                 .map(r -> r.date() + " in " + r.city() + " with " + r.precipitationMm() + "mm")
                 .orElse("No data available");
-
-        /* To do TODO 8 with reduce:
-        Optional<WeatherRecord> wettestDay = cleaned.stream()
-        .reduce((record1, record2) ->
-            record1.precipitationMm() >= record2.precipitationMm() ? record1 : record2
-        );
-
-         */
 
         // TODO 9:
         // Create a Map<String, Double> from city to average humidity.
@@ -193,16 +171,56 @@ public class WeatherDataScienceExercise {
                 ));
 
     }
+
+
+    // TODO 1:
+    public static long countValidRecords(List<WeatherRecord> records) {
+        return records.size();
+    }
+    // TODO 3:
+    // Find the city with the highest average temperature.
+    public static String findCityWithHighestAvgTemp(List<WeatherRecord> records) {
+        String city_highest_avg = records.stream()
+                //first we make a map of each city with their avg temp as the value
+                .collect(Collectors.groupingBy(
+                        WeatherRecord::city,
+                        Collectors.averagingDouble(WeatherRecord::temperatureC)))
+                // A Map itself is not a stream. To process it, we call .entrySet(),
+                // which turns the Map into a Set of Entry objects - Key, Value pairs, then we stream it
+                .entrySet().stream()
+                //take an entry and compare it by its value- which is the avg temp
+                // and then .max looks thru all objs to find one with highest temp value
+                .max(Map.Entry.comparingByValue())
+                //then we get the key- the nam eof the city with the highest temp
+                .map(Map.Entry::getKey)
+                //if the og list was empty, return NA to prevent crashes
+                .orElse("N/A");
+        return city_highest_avg;
+    }
     /* in a parseRow method, we usually focus on two specific things to decide if a row is malformed:
     Length and Data Quality.
     If a row is supposed to have 6 columns but only has 4, it's malformed.
     If the temperature column contains Banana instead of 25.0, it's malformed.
 
      */
-    static Optional<WeatherRecord> parseRow(String row) {
+
+    // TODO 8:
+    public static Optional<WeatherRecord> findWettestDay(List<WeatherRecord> records) {
+        Optional<WeatherRecord> wettestDay = records.stream()
+                .max(Comparator.comparingDouble(WeatherRecord::precipitationMm));
+        return wettestDay;
+    }
+
+    /* To do TODO 8 with reduce instead:
+    Optional<WeatherRecord> wettestDay = cleaned.stream()
+    .reduce((record1, record2) ->
+        record1.precipitationMm() >= record2.precipitationMm() ? record1 : record2
+    );
+     */
+    public static Optional<WeatherRecord> parseRow(String row) {
         // TODO:
         // 1. Split the row by commas
-        String[] parts = row.split(",");
+        String [] parts = row.split(",");
 
         // 2. Reject malformed rows - WeatherRecord has 6 fields
         if (parts.length < 6) {
@@ -210,7 +228,7 @@ public class WeatherDataScienceExercise {
         }
 
         // 3. Reject rows with missing temperature
-        if (parts[3] == null)
+        if (parts[3]==null)
             return Optional.empty();
 
         // 3.1 Reject rows with any missing data
@@ -223,31 +241,39 @@ public class WeatherDataScienceExercise {
         // 4. Parse numeric values safely
         try {
             String stationId = parts[0].trim();
-            String city = parts[1].trim();
-            String date = parts[2].trim();
+            String city      = parts[1].trim();
+            String date      = parts[2].trim();
 
             // Convert the "Math" fields
-            double temp = Double.parseDouble(parts[3].trim());
-            int humidity = Integer.parseInt(parts[4].trim());
-            double precip = Double.parseDouble(parts[5].trim());
+            double temp    = Double.parseDouble(parts[3].trim());
+            int humidity   = Integer.parseInt(parts[4].trim());
+            double precip  = Double.parseDouble(parts[5].trim());
 
-            // 5. Return Optional.empty() if parsing fails
+            // Return the record wrapped in an Optional
             return Optional.of(new WeatherRecord(stationId, city, date, temp, humidity, precip));
 
+            // 5. Return Optional.empty() if parsing fails
         } catch (NumberFormatException e) {
-            // If temperature is "N/A" or humidity is "Low", catch it here
             return Optional.empty();
-        }
     }
+        }
 
-    static boolean isValid(WeatherRecord r) {
+    public static boolean isValid(WeatherRecord r) {
         // TODO:
         // Keep only rows where:
         // - temperature is between -60 and 60
+        if (r.temperatureC() < -60 || r.temperatureC() > 60) {
+            return false;
+        }
         // - humidity is between 0 and 100
+        if (r.humidity() < 0 || r.humidity() > 100) {
+            return false;
+        }
         // - precipitation is >= 0
-
-        throw new UnsupportedOperationException("TODO: implement isValid");
+        if (r.precipitationMm() < 0) {
+            return false;
+        }
+        return true;
     }
 
     record CityWeatherSummary(
