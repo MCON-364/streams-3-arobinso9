@@ -134,6 +134,7 @@ public class WeatherTest {
 
     //------ testing the stream stuff :---------
 
+    // our cleanedData field - for the setUp in the BeforeEach
     private List<WeatherDataScienceExercise.WeatherRecord> cleanedData;
 
     // Helper method specifically for tests to load the real CSV- copied from WeatherDataScienceExercise.java
@@ -153,7 +154,7 @@ public class WeatherTest {
         List<String> rawRows = readCsvForTest("noaa_weather_sample_200_rows.csv");
 
         //first we convert the List <String> into a stream aka conveyor belt. 1 header + 100 rows for example. So streaming all the rows
-        List<WeatherDataScienceExercise.WeatherRecord> cleanedData = rawRows.stream()
+        cleanedData = rawRows.stream()
                 .skip(1) // Skip header- bc it's not data
                 //takes a string=row and hands it to parseRow method. It returns an Optional<WeatherRecord>.
                 // now we have a stream of boxes - some with valid data and some that are empty due to invalid data
